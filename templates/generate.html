@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lip Sync Generation</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .container { max-width: 800px; }
+        .upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin: 20px 0;
+            background: #f8f9fa;
+        }
+        .preview-video {
+            max-width: 100%;
+            max-height: 300px;
+            margin: 10px auto;
+        }
+        .api-key-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        #progressBar {
+            display: none;
+            margin: 20px 0;
+        }
+        #result {
+            margin-top: 20px;
+        }
+        .input-type-toggle {
+            margin-bottom: 15px;
+        }
+        .audio-input, .text-input {
+            display: none;
+        }
+        .back-button {
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="back-button">
+            <a href="/" class="btn btn-outline-secondary">← Back to Home</a>
+        </div>
+
+        <h1 class="text-center mb-4">Lip Sync Generation</h1>
+        
+        <!-- API Key Section -->
+        <div class="api-key-section">
+            <h3>API Configuration</h3>
+            <div class="mb-3">
+                <label for="apiKey" class="form-label">API Key</label>
+                <input type="password" class="form-control" id="apiKey" placeholder="Enter your Sync API key">
+                <div class="form-text">Your API key will be securely used for this session only.</div>
+            </div>
+        </div>
+
+        <!-- Video Upload Section -->
+        <div class="upload-area mb-4">
+            <h4>Source Video</h4>
+            <p class="text-muted">Upload the video containing the face you want to animate</p>
+            <input type="file" class="form-control" id="videoFile" accept="video/*">
+            <video id="videoPreview" class="preview-video" style="display: none;" controls></video>
+        </div>
+
+        <!-- Input Type Selection -->
+        <div class="input-type-toggle">
+            <div class="btn-group w-100" role="group">
+                <input type="radio" class="btn-check" name="inputType" id="textInput" autocomplete="off" checked>
+                <label class="btn btn-outline-primary" for="textInput">Use Text Input</label>
+                
+                <input type="radio" class="btn-check" name="inputType" id="audioInput" autocomplete="off">
+                <label class="btn btn-outline-primary" for="audioInput">Use Audio Input</label>
+            </div>
+        </div>
+
+        <!-- Text Input Section -->
+        <div id="textInputSection" class="upload-area mb-4">
+            <h4>Text Input</h4>
+            <p class="text-muted">Enter the text you want the person to say</p>
+            <textarea class="form-control" id="textContent" rows="4" placeholder="Enter text here..."></textarea>
+        </div>
+
+        <!-- Audio Upload Section -->
+        <div id="audioInputSection" class="upload-area mb-4" style="display: none;">
+            <h4>Audio Input</h4>
+            <p class="text-muted">Upload the audio you want the person to speak</p>
+            <input type="file" class="form-control" id="audioFile" accept="audio/*">
+            <audio id="audioPreview" controls style="display: none; margin-top: 10px;"></audio>
+        </div>
+
+        <!-- Options Section -->
+        <div class="options-section mb-4">
+            <h4>Generation Options</h4>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="modelVersion" class="form-label">Model Version</label>
+                        <select class="form-control" id="modelVersion">
+                            <option value="lipsync-2">Lipsync 2.0 (Latest)</option>
+                            <option value="lipsync-1.9.0-beta">Lipsync 1.9.0 Beta</option>
+                            <option value="lipsync-1.8.0">Lipsync 1.8.0</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="syncMode" class="form-label">Sync Mode</label>
+                        <select class="form-control" id="syncMode">
+                            <option value="bounce">Bounce</option>
+                            <option value="loop">Loop</option>
+                            <option value="cut_off">Cut Off</option>
+                            <option value="silence">Silence</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress and Actions -->
+        <div class="text-center mt-4">
+            <button id="submitBtn" class="btn btn-primary btn-lg">Generate Lip Sync</button>
+            <div class="progress mt-3" id="progressBar">
+                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- Result Section -->
+        <div id="result" class="text-center"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Toggle between text and audio input
+        document.getElementById('textInput').addEventListener('change', function() {
+            document.getElementById('textInputSection').style.display = 'block';
+            document.getElementById('audioInputSection').style.display = 'none';
+        });
+
+        document.getElementById('audioInput').addEventListener('change', function() {
+            document.getElementById('textInputSection').style.display = 'none';
+            document.getElementById('audioInputSection').style.display = 'block';
+        });
+
+        // Preview video
+        document.getElementById('videoFile').addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                const video = document.getElementById('videoPreview');
+                video.src = URL.createObjectURL(file);
+                video.style.display = 'block';
+            }
+        });
+
+        // Preview audio
+        document.getElementById('audioFile').addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                const audio = document.getElementById('audioPreview');
+                audio.src = URL.createObjectURL(file);
+                audio.style.display = 'block';
+            }
+        });
+
+        // Handle form submission
+        document.getElementById('submitBtn').addEventListener('click', async function() {
+            const apiKey = document.getElementById('apiKey').value;
+            if (!apiKey) {
+                alert('Please enter your API key');
+                return;
+            }
+
+            const videoFile = document.getElementById('videoFile').files[0];
+            if (!videoFile) {
+                alert('Please select a video file');
+                return;
+            }
+
+            const isTextInput = document.getElementById('textInput').checked;
+            const formData = new FormData();
+            formData.append('video', videoFile);
+            formData.append('api_key', apiKey);
+            formData.append('model', document.getElementById('modelVersion').value);
+            formData.append('sync_mode', document.getElementById('syncMode').value);
+
+            if (isTextInput) {
+                const text = document.getElementById('textContent').value;
+                if (!text) {
+                    alert('Please enter some text');
+                    return;
+                }
+                formData.append('text', text);
+            } else {
+                const audioFile = document.getElementById('audioFile').files[0];
+                if (!audioFile) {
+                    alert('Please select an audio file');
+                    return;
+                }
+                formData.append('audio', audioFile);
+            }
+
+            // Show progress bar
+            const progressBar = document.getElementById('progressBar');
+            progressBar.style.display = 'block';
+
+            try {
+                // Start lip sync generation
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Poll for status
+                    pollStatus(data.job_id);
+                } else {
+                    throw new Error(data.error || 'Failed to start lip sync generation');
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+                progressBar.style.display = 'none';
+            }
+        });
+
+        // Poll for job status
+        async function pollStatus(jobId) {
+            const progressBar = document.querySelector('.progress-bar');
+            const resultDiv = document.getElementById('result');
+
+            try {
+                while (true) {
+                    const response = await fetch(`/api/status/${jobId}`);
+                    const data = await response.json();
+
+                    if (data.status === 'COMPLETED') {
+                        // Download and display result
+                        const resultResponse = await fetch(`/api/result/${jobId}`);
+                        const blob = await resultResponse.blob();
+                        const url = URL.createObjectURL(blob);
+
+                        resultDiv.innerHTML = `
+                            <h3 class="mb-3">Generated Video</h3>
+                            <video controls class="img-fluid" style="max-width: 100%; max-height: 500px;">
+                                <source src="${url}" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                            <br>
+                            <a href="${url}" download="lipsync_result.mp4" class="btn btn-success mt-3">Download Video</a>
+                        `;
+                        progressBar.parentElement.style.display = 'none';
+                        break;
+                    } else if (data.status === 'FAILED') {
+                        throw new Error(data.error || 'Lip sync generation failed');
+                    } else {
+                        // Update progress bar
+                        progressBar.style.width = '50%';  // Simple progress indication
+                        await new Promise(resolve => setTimeout(resolve, 1000)); // Poll every second
+                    }
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+                progressBar.parentElement.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html> 
