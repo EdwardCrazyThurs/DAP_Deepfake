@@ -5,6 +5,10 @@ import io
 import requests
 import json
 from werkzeug.utils import secure_filename
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from tensorflow.keras.models import load_model
+from utils.audio_preprocess import process_uploaded_audio 
 
 app = Flask(__name__)
 CORS(app)
@@ -12,6 +16,9 @@ CORS(app)
 # Configure upload folder for temporary file storage
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'mp4', 'wav', 'mp3', 'jpg', 'jpeg', 'png'}
+
+# load audio deepfake detection model
+model = load_model('utils/model_audio_fakedetection.h5')
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -53,18 +60,29 @@ def detect_deepfake():
             return jsonify({'error': 'Invalid file type'}), 400
 
         # TODO: Implement actual deepfake detection
-        # For demo purposes, returning mock results
-        mock_results = {
-            'confidence': 0.75,
-            'details': {
-                'Face Manipulation': 0.82,
-                'Audio Inconsistency': 0.65,
-                'Visual Artifacts': 0.78,
-                'Temporal Coherence': 0.71
-            }
-        }
+        # if audio:
+        if media_file.filename.rsplit('.', 1)[1].lower() in ['mp4', 'wav', 'mp3']:
+            mfcc, f0, pitch_var = process_uploaded_audio(media_file)
+            # inference
+            y_pred = model.predict([mfcc, f0, pitch_var])
+            confidence = float(y_pred.flatten()[0])
+            return jsonify({
+                'confidence': round(confidence, 4)
+            }), 200
 
-        return jsonify(mock_results), 200
+        else: # for image -- todo 
+            # For demo purposes, returning mock results
+            mock_results = {
+                'confidence': 0.75,
+                'details': {
+                    'Face Manipulation': 0.82,
+                    'Audio Inconsistency': 0.65,
+                    'Visual Artifacts': 0.78,
+                    'Temporal Coherence': 0.71
+                }
+            }
+
+            return jsonify(mock_results), 200
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500

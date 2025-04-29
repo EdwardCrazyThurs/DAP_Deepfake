@@ -18,7 +18,18 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-4. Run the application:
+4. Install FFmpeg (Required for video-to-audio conversion for deepfake detection)
+Linux (Ubuntu/Debian):
+```bash
+sudo apt update
+sudo apt install ffmpeg
+```
+macOS (with Homebrew):
+```bash
+brew install ffmpeg
+```
+
+5. Run the application:
 ```bash
 python app.py
 ```
@@ -38,7 +49,9 @@ The application will be available at `http://localhost:5000`
 │       └── main.js       # Client-side JavaScript
 ├── templates/
 │   └── index.html        # Main HTML template
+├── utils/
 └── uploads/              # Directory for uploaded files
+
 ```
 
 ## Deployment to Render
