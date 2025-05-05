@@ -12,7 +12,6 @@ ffmpeg-python==0.2.0
 pydub==0.25.1
 
 # Added for deepfake image detection (PyTorch-based)
-Flask-Cors==3.0.10
 flask-executor==0.10.0
 flask-limiter==2.8.1
 waitress==2.1.2
