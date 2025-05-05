@@ -10,7 +10,7 @@ import tempfile
 import atexit
 import shutil
 import logging
-import signal
+# import signal
 from werkzeug.utils import secure_filename
 from functools import wraps
 
@@ -65,10 +65,10 @@ def timeout_route(timeout_seconds=30):
         return wrapper
     return decorator
 
-@app.before_request
-def before_request():
-    signal.signal(signal.SIGALRM, timeout_handler)
-    signal.alarm(30)  # 30 second timeout
+# @app.before_request
+# def before_request():
+#    signal.signal(signal.SIGALRM, timeout_handler)
+#    signal.alarm(30)  # 30 second timeout
 
 def get_audio_model():
     if models_loaded['audio'] is None:
