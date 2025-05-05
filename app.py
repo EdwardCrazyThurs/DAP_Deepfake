@@ -70,19 +70,40 @@ def detect_deepfake():
                 'confidence': round(confidence, 4)
             }), 200
 
-        else: # for image -- todo 
-            # For demo purposes, returning mock results
-            mock_results = {
-                'confidence': 0.75,
-                'details': {
-                    'Face Manipulation': 0.82,
-                    'Audio Inconsistency': 0.65,
-                    'Visual Artifacts': 0.78,
-                    'Temporal Coherence': 0.71
-                }
-            }
+        else:  # for image
+            import torch
+            from torchvision import transforms
+            from PIL import Image
+            from utils.models.image_model import DeepfakeDetectionModel
 
-            return jsonify(mock_results), 200
+            # Load model once (global caching optional)
+            image_model = DeepfakeDetectionModel()
+            image_model.load_state_dict(torch.load('utils/deepfake_efficientnet_pytorch.pth', map_location=torch.device('cpu')))
+            image_model.eval()
+
+            # Preprocessing
+            transform = transforms.Compose([
+                transforms.Resize((224, 224)),
+                transforms.ToTensor(),
+                transforms.Normalize([0.485, 0.456, 0.406],
+                                     [0.229, 0.224, 0.225])
+            ])
+
+            # Read image file from memory
+            img = Image.open(media_file.stream).convert('RGB')
+            img_tensor = transform(img).unsqueeze(0)
+
+            # Inference
+            with torch.no_grad():
+                output = image_model(img_tensor)
+                prediction = torch.argmax(output, dim=1).item()
+                confidence = float(torch.max(output).item())
+
+            return jsonify({
+                'prediction': 'real' if prediction == 1 else 'fake',
+                'confidence': round(confidence, 4)
+            }), 200
+
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
