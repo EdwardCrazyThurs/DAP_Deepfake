@@ -92,33 +92,6 @@
             </div>
         </div>
 
-        <!-- Analysis Options -->
-        <div class="options-section mb-4">
-            <h4>Detection Options</h4>
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label for="detectionMode" class="form-label">Detection Mode</label>
-                        <select class="form-control" id="detectionMode">
-                            <option value="comprehensive">Comprehensive (Recommended)</option>
-                            <option value="quick">Quick Scan</option>
-                            <option value="detailed">Detailed Analysis</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label for="confidenceThreshold" class="form-label">Confidence Threshold</label>
-                        <select class="form-control" id="confidenceThreshold">
-                            <option value="0.5">Medium (50%)</option>
-                            <option value="0.7">High (70%)</option>
-                            <option value="0.9">Very High (90%)</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Progress and Actions -->
         <div class="text-center mt-4">
             <button id="analyzeBtn" class="btn btn-primary btn-lg">Analyze Media</button>
@@ -227,8 +200,6 @@
 
             const formData = new FormData();
             formData.append('media', file);
-            formData.append('mode', document.getElementById('detectionMode').value);
-            formData.append('threshold', document.getElementById('confidenceThreshold').value);
 
             // Show progress
             const progressBar = document.getElementById('progressBar');
