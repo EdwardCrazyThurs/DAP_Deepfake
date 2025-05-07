@@ -12,7 +12,6 @@ import shutil
 import logging
 from werkzeug.utils import secure_filename
 from functools import wraps
-import concurrent.futures
 
 
 # Initialize Flask app
@@ -46,19 +45,6 @@ models_loaded = {
 
 class TimeoutException(Exception):
     pass
-
-def timeout_route(timeout_seconds=30):
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                future = executor.submit(func, *args, **kwargs)
-                try:
-                    return future.result(timeout=timeout_seconds)
-                except concurrent.futures.TimeoutError:
-                    return jsonify({'error': 'Request timed out'}), 504
-        return wrapper
-    return decorator
 
 def get_audio_model():
     if models_loaded['audio'] is None:
@@ -103,8 +89,6 @@ def health_check():
     return jsonify({'status': 'healthy'}), 200
 
 @app.route('/api/detect', methods=['POST'])
-@limiter.limit("10 per minute")
-@timeout_route(25)  # 25 second timeout for detection
 def detect_deepfake():
     try:
         if 'media' not in request.files:
