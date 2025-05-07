@@ -10,7 +10,6 @@ class DeepfakeDetectionModel(nn.Module):
         self.efficientnet.classifier = nn.Sequential(
             nn.Dropout(0.5),
             nn.Linear(num_features, num_classes),
-            nn.Softmax(dim=1)  # ✅ instead of Sigmoid
         )
 
     def forward(self, x):
