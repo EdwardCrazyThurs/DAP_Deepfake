@@ -10,10 +10,9 @@ import tempfile
 import atexit
 import shutil
 import logging
-# import signal
 from werkzeug.utils import secure_filename
 from functools import wraps
-import signal
+import concurrent.futures
 
 
 # Initialize Flask app
@@ -48,29 +47,18 @@ models_loaded = {
 class TimeoutException(Exception):
     pass
 
-def timeout_handler(signum, frame):
-    raise TimeoutException()
-
 def timeout_route(timeout_seconds=30):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            signal.signal(signal.SIGALRM, timeout_handler)
-            signal.alarm(timeout_seconds)
-            try:
-                result = func(*args, **kwargs)
-            except TimeoutException:
-                return jsonify({'error': 'Request timed out'}), 504
-            finally:
-                signal.alarm(0)
-            return result
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(func, *args, **kwargs)
+                try:
+                    return future.result(timeout=timeout_seconds)
+                except concurrent.futures.TimeoutError:
+                    return jsonify({'error': 'Request timed out'}), 504
         return wrapper
     return decorator
-
-# @app.before_request
-# def before_request():
-#    signal.signal(signal.SIGALRM, timeout_handler)
-#    signal.alarm(30)  # 30 second timeout
 
 def get_audio_model():
     if models_loaded['audio'] is None:
