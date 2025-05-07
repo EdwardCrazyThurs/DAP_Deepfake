@@ -155,7 +155,7 @@ def detect_deepfake():
                 with torch.no_grad():
                     output = get_image_model()(img_tensor)
                     prediction = torch.argmax(output, dim=1).item()
-                    confidence = float(torch.max(output).item())
+                    confidence = torch.softmax(output, dim=1)[0][prediction].item()
                 
                 return jsonify({
                     'prediction': 'real' if prediction == 1 else 'fake',
