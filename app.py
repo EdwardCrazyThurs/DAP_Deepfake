@@ -9,6 +9,7 @@ import requests
 import tempfile
 import atexit
 import shutil
+import torch
 import logging
 from werkzeug.utils import secure_filename
 from functools import wraps
@@ -54,14 +55,24 @@ def get_audio_model():
 
 def get_image_model():
     if models_loaded['image'] is None:
-        import torch
-        from torchvision import transforms
+        
         from utils.image_model import DeepfakeDetectionModel
+
+        logger = logging.getLogger(__name__)
         model = DeepfakeDetectionModel()
-        model.load_state_dict(torch.load('utils/deepfake_efficientnet_pytorch.pth', 
-                                       map_location=torch.device('cpu')))
+
+        try:
+            state_dict = torch.load('utils/deepfake_efficientnet_pytorch.pth', 
+                                    map_location=torch.device('cpu'))
+            model.load_state_dict(state_dict)
+            logger.info("Model weights loaded successfully.")
+        except Exception as e:
+            logger.error(f"Model weight loading failed: {str(e)}")
+            raise e
+
         model.eval()
         models_loaded['image'] = model
+
     return models_loaded['image']
 
 def allowed_file(filename):
