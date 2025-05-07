@@ -56,7 +56,7 @@ def get_image_model():
     if models_loaded['image'] is None:
         import torch
         from torchvision import transforms
-        from utils.models.image_model import DeepfakeDetectionModel
+        from utils.image_model import DeepfakeDetectionModel
         model = DeepfakeDetectionModel()
         model.load_state_dict(torch.load('utils/deepfake_efficientnet_pytorch.pth', 
                                        map_location=torch.device('cpu')))
