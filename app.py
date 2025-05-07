@@ -13,6 +13,8 @@ import logging
 # import signal
 from werkzeug.utils import secure_filename
 from functools import wraps
+import signal
+
 
 # Initialize Flask app
 app = Flask(__name__)
