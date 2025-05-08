@@ -245,7 +245,7 @@
 
             // Calculate overall confidence
             const confidence = results.confidence || 0;
-            const isDeepfake = confidence > 0.5;
+            const isDeepfake = results.prediction === 'fake';
 
             // Update confidence meter
             confidenceMeter.style.width = `${confidence * 100}%`;
