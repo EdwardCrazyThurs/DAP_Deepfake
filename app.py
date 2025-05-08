@@ -138,7 +138,10 @@ def detect_deepfake():
                 img_tensor = transform(img).unsqueeze(0)
                 
                 with torch.no_grad():
+                    model = get_image_model()
+                    output = model(img_tensor)
                     softmax_output = torch.softmax(output, dim=1)[0]
+
                     confidence_fake = softmax_output[0].item()
                     confidence_real = softmax_output[1].item()
                     
