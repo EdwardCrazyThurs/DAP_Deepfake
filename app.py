@@ -138,14 +138,22 @@ def detect_deepfake():
                 img_tensor = transform(img).unsqueeze(0)
                 
                 with torch.no_grad():
-                    output = get_image_model()(img_tensor)
-                    prediction = torch.argmax(output, dim=1).item()
-                    confidence = torch.softmax(output, dim=1)[0][prediction].item()
-                
-                return jsonify({
-                    'prediction': 'real' if prediction == 1 else 'fake',
-                    'confidence': round(confidence, 4)
-                }), 200
+                    softmax_output = torch.softmax(output, dim=1)[0]
+                    confidence_fake = softmax_output[0].item()
+                    confidence_real = softmax_output[1].item()
+                    
+                    # Define threshold – e.g., only mark as fake if fake confidence > 0.9
+                    if confidence_fake > 0.9:
+                        prediction_label = 'fake'
+                        confidence = confidence_fake
+                    else:
+                        prediction_label = 'real'
+                        confidence = confidence_real
+                    
+                    return jsonify({
+                        'prediction': prediction_label,
+                        'confidence': round(confidence, 4)
+                    }), 200
             
             else:
                 return jsonify({'error': 'Unsupported file type'}), 400
