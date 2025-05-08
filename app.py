@@ -146,7 +146,7 @@ def detect_deepfake():
                     confidence_real = softmax_output[1].item()
                     
                     # Define threshold – e.g., only mark as fake if fake confidence > 0.9
-                    if confidence_fake > 0.9:
+                    if confidence_fake > 0.75:
                         prediction_label = 'fake'
                         confidence = confidence_fake
                     else:
