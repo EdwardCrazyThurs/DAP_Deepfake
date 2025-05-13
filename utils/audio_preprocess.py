@@ -21,17 +21,18 @@ def process_f0(f0_array):
 # process audio: load + extract features + scale
 def process_uploaded_audio(file, target_duration=2.0, sr=16000, silence_threshold=1e-4, n_mfcc=40):
     # load audio
-    filename = file.filename.lower()
-    if filename.endswith('.mp4') : # or filename.endswith('.mov') or filename.endswith('.avi')
+    #filename = file.filename.lower()
+    if file.endswith('.mp4') : # or filename.endswith('.mov') or filename.endswith('.avi')
         # if video: extract audio & read
         video = AudioSegment.from_file(file, format="mp4")
         buffer = io.BytesIO()
         video.export(buffer, format="wav")
         buffer.seek(0)
         file_bytes = buffer.read()
-    elif filename.endswith('.wav') or filename.endswith('.mp3'):
+    elif file.endswith('.wav') or file.endswith('.mp3'):
         # if audio: read
-        file_bytes = file.read()
+        with open(file, 'rb') as f:
+            file_bytes = f.read() 
     y, _ = librosa.load(io.BytesIO(file_bytes), sr=sr)
 
     # remove silent audio

@@ -120,7 +120,11 @@ def detect_deepfake():
                 mfcc, f0, pitch_var = process_uploaded_audio(temp_file.name)
                 model = get_audio_model()
                 y_pred = model.predict([mfcc, f0, pitch_var])
-                return jsonify({'confidence': round(float(y_pred.flatten()[0]), 4)}), 200
+                if y_pred.flatten()[0]>0.5:
+                    prediction_label = 'fake'
+                else: 
+                    prediction_label = 'real'
+                return jsonify({'prediction': prediction_label,'confidence': round(float(y_pred.flatten()[0]), 4)}), 200
             
             # Handle image files
             elif file_ext in ['jpg', 'jpeg', 'png']:
